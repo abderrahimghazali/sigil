@@ -9,6 +9,7 @@ xcuserdata/
 
 # Build
 build/
+dist/
 DerivedData/
 *.dSYM.zip
 *.dSYM

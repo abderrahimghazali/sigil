@@ -36,29 +36,11 @@ open Sigil.xcodeproj
 
 Build and run (`⌘R`). Sigil appears in the menubar.
 
-## Architecture
+### DMG Install
 
-```
-Sigil/
-├── Models/
-│   ├── Credential.swift            Codable record (no password)
-│   └── PasswordStrength.swift      5-level strength enum
-├── Services/
-│   ├── KeychainService.swift       SecItem CRUD keyed by credential UUID
-│   ├── CredentialStore.swift       JSON metadata in Application Support
-│   ├── PasswordGenerator.swift     Entropy-pool generator
-│   └── StrengthEvaluator.swift     Shannon-style entropy + common-pw blocklist
-├── ViewModels/
-│   └── CredentialsViewModel.swift  @MainActor ObservableObject
-└── Views/
-    ├── ContentView.swift           Popover root
-    ├── CredentialRowView.swift     Row with hover actions
-    ├── AddCredentialView.swift     Add / Edit sheet
-    ├── PasswordGeneratorView.swift Generator sheet
-    └── StrengthMeterView.swift     5-bar meter
-```
+Download the `.dmg` from [Releases](https://github.com/abderrahimghazali/sigil/releases), open it, and drag Sigil to Applications.
 
-Passwords live only in the Keychain, accessed by `credential.id`. The on-disk JSON store contains service / username / URL / notes / timestamps — never the secret.
+> **Note:** Since the app is not notarized, macOS will block it on first launch. Right-click (or Control-click) on Sigil.app and select **Open**, then click **Open** in the dialog to bypass Gatekeeper.
 
 ## License
 
