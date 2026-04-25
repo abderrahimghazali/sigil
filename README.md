@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="docs/icon.png" alt="Sigil" width="128" height="128">
+</p>
+
 <h1 align="center">Sigil</h1>
 
 <p align="center">
@@ -7,19 +11,20 @@
 </p>
 
 <p align="center">
-  A native macOS menubar password manager.<br>
+  A native macOS menubar secret manager.<br>
   Seal your credentials behind the macOS Keychain — one click away in the menubar.
 </p>
 
 ## Features
 
 - **Menubar native** — Lives in the macOS menubar as an `NSPopover`. No dock icon, no window clutter.
-- **Keychain sealed** — Passwords stored exclusively in the macOS Keychain. Never written to disk in plain text.
-- **One-click copy** — Click any credential to copy the password. Hover to reveal username, password, or eye-toggle.
+- **Keychain sealed** — Passwords, API tokens, access tokens, and secrets stored exclusively in the macOS Keychain. Never written to disk in plain text.
+- **One-click copy** — Click any credential to copy its secret. Hover to reveal username, secret, or eye-toggle.
 - **Strength meter** — Visual entropy indicator on every entry and inside the generator.
 - **Password generator** — Length 8–64, uppercase / lowercase / digits / symbols toggles, ambiguous-character filter.
 - **Search** — Filter credentials by service, username, or URL.
 - **Edit & open** — Right-click any row to edit, copy username, open the URL, or delete.
+- **Import & export** — Move Sigil JSON backups between Macs. Exports include plaintext secrets, so store them carefully.
 - **Launch at Login** — Optional auto-start on macOS login.
 
 ## Installation

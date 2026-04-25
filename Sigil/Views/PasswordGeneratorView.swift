@@ -14,11 +14,10 @@ struct PasswordGeneratorView: View {
                     .font(.system(size: 13, weight: .semibold))
                 Spacer()
                 Button(action: { isPresented = false }) {
-                    Image(systemName: "xmark.circle.fill")
-                        .font(.system(size: 16))
-                        .foregroundStyle(.tertiary)
+                    Image(systemName: "xmark")
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SigilIconButtonStyle())
+                .help("Close")
             }
             .padding(.horizontal, 20)
             .padding(.top, 20)
@@ -70,22 +69,18 @@ struct PasswordGeneratorView: View {
                         Text("Regenerate")
                     }
                 }
-                .buttonStyle(.bordered)
-                .controlSize(.regular)
+                .buttonStyle(SigilCommandButtonStyle(variant: .secondary))
 
                 Spacer()
 
                 Button("Cancel") { isPresented = false }
-                    .buttonStyle(.bordered)
-                    .controlSize(.regular)
+                    .buttonStyle(SigilCommandButtonStyle(variant: .secondary))
 
                 Button("Use") {
                     onUse(generated)
                     isPresented = false
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(.indigo)
-                .controlSize(.regular)
+                .buttonStyle(SigilCommandButtonStyle(variant: .primary))
                 .disabled(generated.isEmpty)
             }
             .padding(.horizontal, 20)
@@ -105,10 +100,8 @@ struct PasswordGeneratorView: View {
                 Spacer()
                 Button(action: copyGenerated) {
                     Image(systemName: "doc.on.doc")
-                        .font(.system(size: 10, weight: .semibold))
-                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.plain)
+                .buttonStyle(SigilIconButtonStyle())
                 .help("Copy")
             }
 

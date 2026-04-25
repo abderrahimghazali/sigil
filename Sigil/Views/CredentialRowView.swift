@@ -3,16 +3,17 @@ import AppKit
 
 struct CredentialRowView: View {
     let credential: Credential
-    let password: String?
+    let loadSecret: () -> String?
     let onDelete: () -> Void
     let onEdit: () -> Void
 
     @State private var copied: CopiedField?
     @State private var hovering = false
     @State private var revealed = false
+    @State private var revealedSecret: String?
 
     private enum CopiedField {
-        case username, password
+        case username, secret
     }
 
     var body: some View {
@@ -41,9 +42,9 @@ struct CredentialRowView: View {
         )
         .contentShape(Rectangle())
         .onHover { hovering = $0 }
-        .onTapGesture { copyPassword() }
+        .onTapGesture { copySecret() }
         .contextMenu {
-            Button("Copy Password") { copyPassword() }
+            Button(credential.kind.copyTitle) { copySecret() }
             Button("Copy Username") { copyUsername() }
             if !credential.url.isEmpty {
                 Button("Open URL") { openURL() }
@@ -68,8 +69,8 @@ struct CredentialRowView: View {
             copiedBadge(copied)
         } else if hovering {
             hoverActions
-        } else if revealed, let password {
-            Text(password)
+        } else if revealed, let revealedSecret {
+            Text(revealedSecret)
                 .font(.system(size: 11, weight: .medium, design: .monospaced))
                 .foregroundStyle(.primary)
                 .lineLimit(1)
@@ -77,6 +78,8 @@ struct CredentialRowView: View {
                 .frame(maxWidth: 110, alignment: .trailing)
         } else if let strength {
             StrengthMeterView(strength: strength, compact: true)
+        } else {
+            typeBadge
         }
     }
 
@@ -84,21 +87,17 @@ struct CredentialRowView: View {
         HStack(spacing: 4) {
             iconButton(systemName: "person", tooltip: "Copy username") { copyUsername() }
             iconButton(systemName: revealed ? "eye.slash" : "eye", tooltip: revealed ? "Hide" : "Reveal") {
-                revealed.toggle()
+                toggleReveal()
             }
-            iconButton(systemName: "doc.on.doc", tooltip: "Copy password") { copyPassword() }
+            iconButton(systemName: "doc.on.doc", tooltip: credential.kind.copyTitle) { copySecret() }
         }
     }
 
     private func iconButton(systemName: String, tooltip: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Image(systemName: systemName)
-                .font(.system(size: 10, weight: .medium))
-                .frame(width: 22, height: 22)
-                .background(.quaternary.opacity(0.4), in: RoundedRectangle(cornerRadius: 5))
-                .foregroundStyle(.secondary)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SigilIconButtonStyle())
         .help(tooltip)
     }
 
@@ -124,24 +123,49 @@ struct CredentialRowView: View {
         .transition(.scale.combined(with: .opacity))
     }
 
+    private var typeBadge: some View {
+        Text(credential.kind.shortName)
+            .font(.system(size: 10, weight: .medium))
+            .foregroundStyle(.secondary)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 3)
+            .background(.primary.opacity(0.055), in: RoundedRectangle(cornerRadius: 5, style: .continuous))
+            .overlay(
+                RoundedRectangle(cornerRadius: 5, style: .continuous)
+                    .strokeBorder(.primary.opacity(0.08), lineWidth: 0.8)
+            )
+    }
+
     private var colorForService: Color {
         let hue = Double(credential.service.unicodeScalars.reduce(0) { $0 + Int($1.value) } % 360) / 360.0
         return Color(hue: hue, saturation: 0.5, brightness: 0.8)
     }
 
     private var strength: PasswordStrength? {
-        guard let password else { return nil }
-        return StrengthEvaluator.evaluate(password)
+        guard credential.kind == .password, let revealedSecret else { return nil }
+        return StrengthEvaluator.evaluate(revealedSecret)
     }
 
-    private func copyPassword() {
-        guard let password else { return }
+    private func copySecret() {
+        guard let secret = loadSecret() else { return }
         NSPasteboard.general.clearContents()
-        NSPasteboard.general.setString(password, forType: .string)
-        copied = .password
+        NSPasteboard.general.setString(secret, forType: .string)
+        copied = .secret
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             copied = nil
         }
+    }
+
+    private func toggleReveal() {
+        if revealed {
+            revealed = false
+            revealedSecret = nil
+            return
+        }
+
+        guard let secret = loadSecret() else { return }
+        revealedSecret = secret
+        revealed = true
     }
 
     private func copyUsername() {

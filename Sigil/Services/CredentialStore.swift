@@ -23,8 +23,8 @@ final class CredentialStore {
         return (try? decoder.decode([Credential].self, from: data)) ?? []
     }
 
-    func saveCredentials(_ credentials: [Credential]) {
-        guard let data = try? encoder.encode(credentials) else { return }
-        try? data.write(to: fileURL, options: .atomic)
+    func saveCredentials(_ credentials: [Credential]) throws {
+        let data = try encoder.encode(credentials)
+        try data.write(to: fileURL, options: .atomic)
     }
 }

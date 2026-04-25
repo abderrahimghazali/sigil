@@ -29,13 +29,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private func trayIcon() -> NSImage {
-        if let custom = NSImage(named: "TrayIcon") {
-            custom.size = NSSize(width: 18, height: 18)
-            custom.isTemplate = true
-            return custom
-        }
-        let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
-        let symbol = NSImage(systemSymbolName: "lock.badge.checkmark.fill", accessibilityDescription: "Sigil")?
+        let config = NSImage.SymbolConfiguration(pointSize: 17, weight: .semibold)
+        let symbol = NSImage(systemSymbolName: "lock.shield.fill", accessibilityDescription: "Sigil")?
             .withSymbolConfiguration(config) ?? NSImage()
         symbol.isTemplate = true
         return symbol
