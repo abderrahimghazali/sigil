@@ -35,7 +35,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             return custom
         }
         let config = NSImage.SymbolConfiguration(pointSize: 14, weight: .semibold)
-        let symbol = NSImage(systemSymbolName: "seal.fill", accessibilityDescription: "Sigil")?
+        let symbol = NSImage(systemSymbolName: "lock.badge.checkmark.fill", accessibilityDescription: "Sigil")?
             .withSymbolConfiguration(config) ?? NSImage()
         symbol.isTemplate = true
         return symbol

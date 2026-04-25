@@ -47,18 +47,7 @@ struct ContentView: View {
     private var header: some View {
         HStack {
             HStack(spacing: 7) {
-                ZStack {
-                    RoundedRectangle(cornerRadius: 4)
-                        .fill(LinearGradient(
-                            colors: [.indigo, .purple],
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        ))
-                        .frame(width: 20, height: 20)
-                    Image(systemName: "seal.fill")
-                        .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(.white)
-                }
+                SigilMark(size: 20, cornerRadius: 5)
                 Text("Sigil")
                     .font(.system(size: 13, weight: .semibold))
             }
@@ -120,9 +109,8 @@ struct ContentView: View {
     private var emptyState: some View {
         VStack(spacing: 12) {
             Spacer()
-            Image(systemName: "seal")
-                .font(.system(size: 32, weight: .light))
-                .foregroundStyle(.secondary.opacity(0.5))
+            SigilMark(size: 44)
+                .opacity(0.55)
             VStack(spacing: 4) {
                 Text("No credentials yet")
                     .font(.system(size: 13, weight: .medium))
