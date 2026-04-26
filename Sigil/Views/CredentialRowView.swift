@@ -9,8 +9,8 @@ struct CredentialRowView: View {
 
     @State private var copied: CopiedField?
     @State private var hovering = false
-    @State private var revealed = false
-    @State private var revealedSecret: String?
+    @State private var secretPreview: String?
+    @State private var confirmingDelete = false
 
     private enum CopiedField {
         case username, secret
@@ -52,15 +52,41 @@ struct CredentialRowView: View {
             Divider()
             Button("Edit") { onEdit() }
             Divider()
-            Button("Delete", role: .destructive) { onDelete() }
+            Button("Delete", role: .destructive) { confirmingDelete = true }
         }
         .animation(.easeInOut(duration: 0.15), value: hovering)
         .animation(.spring(duration: 0.3), value: copied)
-        .animation(.easeInOut(duration: 0.15), value: revealed)
+        .onAppear(perform: loadSecretPreviewIfNeeded)
+        .popover(isPresented: $confirmingDelete, arrowEdge: .trailing) {
+            DeleteConfirmation(
+                service: credential.service,
+                onConfirm: {
+                    confirmingDelete = false
+                    onDelete()
+                },
+                onCancel: { confirmingDelete = false }
+            )
+        }
     }
 
     private var usernameDisplay: String {
-        credential.username.isEmpty ? "—" : credential.username
+        if !credential.username.isEmpty { return credential.username }
+        if let secretPreview { return secretPreview }
+        return "—"
+    }
+
+    private func loadSecretPreviewIfNeeded() {
+        guard secretPreview == nil,
+              credential.username.isEmpty,
+              credential.kind == .apiToken || credential.kind == .accessToken,
+              let secret = loadSecret() else { return }
+        secretPreview = previewString(for: secret)
+    }
+
+    private func previewString(for secret: String) -> String {
+        let trimmed = secret.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmed.count >= 8 else { return trimmed.isEmpty ? "—" : trimmed }
+        return "\(trimmed.prefix(4))…\(trimmed.suffix(4))"
     }
 
     @ViewBuilder
@@ -69,15 +95,6 @@ struct CredentialRowView: View {
             copiedBadge(copied)
         } else if hovering {
             hoverActions
-        } else if revealed, let revealedSecret {
-            Text(revealedSecret)
-                .font(.system(size: 11, weight: .medium, design: .monospaced))
-                .foregroundStyle(.primary)
-                .lineLimit(1)
-                .truncationMode(.tail)
-                .frame(maxWidth: 110, alignment: .trailing)
-        } else if let strength {
-            StrengthMeterView(strength: strength, compact: true)
         } else {
             typeBadge
         }
@@ -86,10 +103,8 @@ struct CredentialRowView: View {
     private var hoverActions: some View {
         HStack(spacing: 4) {
             iconButton(systemName: "person", tooltip: "Copy username") { copyUsername() }
-            iconButton(systemName: revealed ? "eye.slash" : "eye", tooltip: revealed ? "Hide" : "Reveal") {
-                toggleReveal()
-            }
             iconButton(systemName: "doc.on.doc", tooltip: credential.kind.copyTitle) { copySecret() }
+            iconButton(systemName: "trash", tooltip: "Delete") { confirmingDelete = true }
         }
     }
 
@@ -141,11 +156,6 @@ struct CredentialRowView: View {
         return Color(hue: hue, saturation: 0.5, brightness: 0.8)
     }
 
-    private var strength: PasswordStrength? {
-        guard credential.kind == .password, let revealedSecret else { return nil }
-        return StrengthEvaluator.evaluate(revealedSecret)
-    }
-
     private func copySecret() {
         guard let secret = loadSecret() else { return }
         NSPasteboard.general.clearContents()
@@ -154,18 +164,6 @@ struct CredentialRowView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
             copied = nil
         }
-    }
-
-    private func toggleReveal() {
-        if revealed {
-            revealed = false
-            revealedSecret = nil
-            return
-        }
-
-        guard let secret = loadSecret() else { return }
-        revealedSecret = secret
-        revealed = true
     }
 
     private func copyUsername() {
@@ -185,6 +183,81 @@ struct CredentialRowView: View {
         }
         if let url = URL(string: raw) {
             NSWorkspace.shared.open(url)
+        }
+    }
+}
+
+private struct DeleteConfirmation: View {
+    let service: String
+    let onConfirm: () -> Void
+    let onCancel: () -> Void
+
+    var body: some View {
+        VStack(spacing: 14) {
+            VStack(spacing: 8) {
+                Image(systemName: "trash.fill")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.red.opacity(0.85))
+                    .frame(width: 32, height: 32)
+                    .background(Circle().fill(.red.opacity(0.10)))
+
+                VStack(spacing: 2) {
+                    Text("Delete credential?")
+                        .font(.system(size: 12, weight: .semibold))
+                    Text(service)
+                        .font(.system(size: 11))
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                }
+            }
+
+            HStack(spacing: 6) {
+                Button(action: onCancel) {
+                    Text("Cancel").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(MinimalConfirmButton(role: .cancel))
+
+                Button(action: onConfirm) {
+                    Text("Delete").frame(maxWidth: .infinity)
+                }
+                .buttonStyle(MinimalConfirmButton(role: .destroy))
+            }
+        }
+        .padding(16)
+        .frame(width: 220)
+    }
+}
+
+private struct MinimalConfirmButton: ButtonStyle {
+    enum Role { case cancel, destroy }
+    let role: Role
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 11, weight: .medium))
+            .frame(height: 26)
+            .foregroundStyle(foreground)
+            .background(
+                background(pressed: configuration.isPressed),
+                in: RoundedRectangle(cornerRadius: 6, style: .continuous)
+            )
+            .animation(.easeOut(duration: 0.12), value: configuration.isPressed)
+    }
+
+    private var foreground: Color {
+        switch role {
+        case .cancel: return .primary
+        case .destroy: return .red
+        }
+    }
+
+    private func background(pressed: Bool) -> some ShapeStyle {
+        switch role {
+        case .cancel:
+            return AnyShapeStyle(Color.primary.opacity(pressed ? 0.10 : 0.05))
+        case .destroy:
+            return AnyShapeStyle(Color.red.opacity(pressed ? 0.20 : 0.10))
         }
     }
 }
